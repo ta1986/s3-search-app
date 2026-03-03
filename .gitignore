@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.env
+*.log
+
+# USWDS static assets are copied from node_modules — regenerate with setup script
+frontend/public/uswds/
