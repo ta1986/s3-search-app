@@ -5,11 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "node scripts/copy-uswds.mjs",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "setup:uswds": "node scripts/copy-uswds.mjs"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@uswds/uswds": "^3.13.0",
