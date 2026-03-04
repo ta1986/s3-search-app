@@ -2,7 +2,6 @@ import {
     Injectable,
     Logger,
     BadRequestException,
-    NotFoundException,
     InternalServerErrorException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -11,10 +10,7 @@ import {
     PutObjectCommand,
     DeleteObjectCommand,
     ListObjectsV2Command,
-    GetObjectCommand,
-    NoSuchKey,
 } from '@aws-sdk/client-s3';
-import { Readable } from 'stream';
 
 export interface S3File {
     key: string;
@@ -22,7 +18,6 @@ export interface S3File {
     lastModified: Date;
 }
 
-/** Max upload size: 50 MB */
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
 @Injectable()
@@ -36,14 +31,11 @@ export class S3Service {
         this.bucket = this.config.get<string>('S3_BUCKET_NAME', 'my-bucket');
         this.prefix = this.config.get<string>('S3_PREFIX', '');
 
-        // Uses default credential chain (IAM role, env vars, SSO, etc.)
-        // No access key / secret key needed for enterprise AWS accounts
         this.s3 = new S3Client({
             region: this.config.get<string>('AWS_REGION', 'us-east-1'),
         });
     }
 
-    /** Upload a file to S3 */
     async upload(file: Express.Multer.File): Promise<S3File> {
         if (!file) {
             throw new BadRequestException('No file provided');
@@ -74,7 +66,6 @@ export class S3Service {
         return { key, size: file.size, lastModified: new Date() };
     }
 
-    /** List all objects in the bucket (handles pagination for large buckets) */
     async listFiles(): Promise<S3File[]> {
         const files: S3File[] = [];
         let continuationToken: string | undefined;
@@ -109,7 +100,6 @@ export class S3Service {
         return files;
     }
 
-    /** Delete an object from S3 */
     async deleteFile(key: string): Promise<{ deleted: true }> {
         this.logger.log(`Deleting ${key}`);
         try {
@@ -121,33 +111,5 @@ export class S3Service {
             throw new InternalServerErrorException('Delete from S3 failed');
         }
         return { deleted: true };
-    }
-
-    /** Simple search: list objects whose key contains the query string */
-    async search(query: string): Promise<S3File[]> {
-        const files = await this.listFiles();
-        if (!query.trim()) return files;
-        const lower = query.toLowerCase();
-        return files.filter((f) => f.key.toLowerCase().includes(lower));
-    }
-
-    /** Download a file from S3 and return a readable stream */
-    async download(key: string): Promise<{ stream: Readable; contentType: string }> {
-        try {
-            const result = await this.s3.send(
-                new GetObjectCommand({ Bucket: this.bucket, Key: key }),
-            );
-
-            return {
-                stream: result.Body as Readable,
-                contentType: result.ContentType ?? 'application/octet-stream',
-            };
-        } catch (err) {
-            if (err instanceof NoSuchKey) {
-                throw new NotFoundException(`File "${key}" not found`);
-            }
-            this.logger.error(`Download failed for ${key}`, (err as Error).stack);
-            throw new InternalServerErrorException('Download from S3 failed');
-        }
     }
 }

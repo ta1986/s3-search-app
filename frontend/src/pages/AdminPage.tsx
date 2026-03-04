@@ -1,12 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import {
-    listFiles,
-    uploadFile,
-    deleteFile,
-    getDownloadUrl,
-    type S3File,
-} from '../api';
-import { formatSize } from '../utils/formatSize';
+import { listFiles, uploadFile, deleteFile, type S3File } from '../api';
+
+function formatSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 export default function AdminPage() {
     const [files, setFiles] = useState<S3File[]>([]);
@@ -18,10 +17,8 @@ export default function AdminPage() {
     const fetchFiles = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await listFiles();
-            setFiles(data);
-        } catch (err) {
-            console.error(err);
+            setFiles(await listFiles());
+        } catch {
             setMessage({ type: 'error', text: 'Failed to load files.' });
         } finally {
             setLoading(false);
@@ -38,7 +35,6 @@ export default function AdminPage() {
             setMessage({ type: 'error', text: 'Please select a file first.' });
             return;
         }
-
         setUploading(true);
         setMessage(null);
         try {
@@ -48,8 +44,7 @@ export default function AdminPage() {
             setMessage({ type: 'success', text: 'File(s) uploaded successfully!' });
             input.value = '';
             await fetchFiles();
-        } catch (err) {
-            console.error(err);
+        } catch {
             setMessage({ type: 'error', text: 'Upload failed. Please try again.' });
         } finally {
             setUploading(false);
@@ -62,8 +57,7 @@ export default function AdminPage() {
             await deleteFile(key);
             setMessage({ type: 'success', text: `Deleted "${key}".` });
             await fetchFiles();
-        } catch (err) {
-            console.error(err);
+        } catch {
             setMessage({ type: 'error', text: 'Delete failed.' });
         }
     };
@@ -74,10 +68,9 @@ export default function AdminPage() {
                 <div className="grid-container">
                     <h1 className="font-heading-xl margin-bottom-4">File Management</h1>
 
-                    {/* Alert messages */}
                     {message && (
                         <div
-                            className={`usa-alert usa-alert--${message.type === 'success' ? 'success' : 'error'} usa-alert--slim margin-bottom-3`}
+                            className={`usa-alert usa-alert--${message.type} usa-alert--slim margin-bottom-3`}
                             role="alert"
                         >
                             <div className="usa-alert__body">
@@ -86,7 +79,6 @@ export default function AdminPage() {
                         </div>
                     )}
 
-                    {/* Upload area */}
                     <div className="usa-card margin-bottom-4">
                         <div className="usa-card__container">
                             <div className="usa-card__header">
@@ -117,7 +109,6 @@ export default function AdminPage() {
                         </div>
                     </div>
 
-                    {/* File list */}
                     <h2 className="font-heading-lg margin-bottom-2">Stored Files</h2>
                     {loading ? (
                         <p>Loading files...</p>
@@ -140,13 +131,6 @@ export default function AdminPage() {
                                         <td>{formatSize(file.size)}</td>
                                         <td>{new Date(file.lastModified).toLocaleDateString()}</td>
                                         <td>
-                                            <a
-                                                href={getDownloadUrl(file.key)}
-                                                className="usa-button usa-button--outline usa-button--unstyled margin-right-2"
-                                                download
-                                            >
-                                                Download
-                                            </a>
                                             <button
                                                 className="usa-button usa-button--secondary usa-button--unstyled text-secondary"
                                                 onClick={() => handleDelete(file.key)}
