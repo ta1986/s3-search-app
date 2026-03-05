@@ -3,7 +3,9 @@ import {
     Post,
     Get,
     Delete,
-    Param,
+    Query,
+    Body,
+    BadRequestException,
     UploadedFile,
     UseInterceptors,
 } from '@nestjs/common';
@@ -25,8 +27,15 @@ export class S3Controller {
         return this.s3Service.listFiles();
     }
 
-    @Delete('files/:key')
-    remove(@Param('key') key: string) {
+    @Delete('files')
+    removeByQueryOrBody(
+        @Query('key') keyFromQuery?: string,
+        @Body('key') keyFromBody?: string,
+    ) {
+        const key = keyFromQuery ?? keyFromBody;
+        if (!key) {
+            throw new BadRequestException('Missing required "key" value');
+        }
         return this.s3Service.deleteFile(key);
     }
 }

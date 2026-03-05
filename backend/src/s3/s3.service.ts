@@ -101,6 +101,10 @@ export class S3Service {
     }
 
     async deleteFile(key: string): Promise<{ deleted: true }> {
+        if (!key?.trim()) {
+            throw new BadRequestException('File key is required');
+        }
+
         this.logger.log(`Deleting ${key}`);
         try {
             await this.s3.send(

@@ -54,7 +54,8 @@ s3-search-app/
 | POST   | `/api/files`                 | Upload a file     |
 | GET    | `/api/search?q=<query>`      | Search files      |
 | GET    | `/api/files/download/:key`   | Download a file   |
-| DELETE | `/api/files/:key`            | Delete a file     |
+| DELETE | `/api/files?key=<s3-key>`    | Delete a file     |
+| DELETE | `/api/files/:key`            | Delete a file (legacy path style) |
 
 ## AWS Configuration
 

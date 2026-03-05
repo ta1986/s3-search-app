@@ -24,7 +24,8 @@ export async function listFiles(): Promise<S3File[]> {
 }
 
 export async function deleteFile(key: string): Promise<void> {
-    const res = await fetch(`${API_BASE}/files/${encodeURIComponent(key)}`, {
+    const params = new URLSearchParams({ key });
+    const res = await fetch(`${API_BASE}/files?${params.toString()}`, {
         method: 'DELETE',
     });
     if (!res.ok) throw new Error('Delete failed');
