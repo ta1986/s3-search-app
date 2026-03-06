@@ -13,6 +13,7 @@ Upload files to AWS S3 and search them. Monorepo with a **React** frontend (USWD
 # Install all dependencies
 npm run install:all
 
+
 # Configure AWS
 cp backend/.env.example backend/.env
 # Edit backend/.env with your S3 bucket name and region
